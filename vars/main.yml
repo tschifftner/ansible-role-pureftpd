@@ -1,0 +1,5 @@
+---
+# Apt packages
+pureftpd_apt_packages:
+  - pure-ftpd-common
+  - pure-ftpd

@@ -1,0 +1,73 @@
+---
+- name: 'Install pureftpd'
+  apt:
+    pkg: '{{ item }}'
+    state: present
+  with_items: pureftpd_apt_packages
+
+- name: Ensure pureftpd_group exists
+  register: _pureftpd_group
+  group:
+    name: '{{ pureftpd_group }}'
+    system: no
+    state: present
+
+- name: Ensure pureftpd_user exists
+  register: _pureftpd_user
+  user:
+    name: '{{ pureftpd_user }}'
+    system: no
+    group: '{{ pureftpd_group }}'
+    home: /dev/null
+    shell: /etc
+    state: present
+
+- name: Ensure conf directory
+  file:
+    path: '/etc/pure-ftpd'
+    state: directory
+    owner: root
+    group: root
+    mode: '0750'
+
+
+- name: 'Get all config variables from file system'
+  shell: ls -1 /etc/pure-ftpd/conf
+  register: contents
+  changed_when: false
+
+- name: Remove old config files
+  notify: restart pureftpd
+  file:
+    path: '/etc/pure-ftpd/conf/{{ item }}'
+    state: absent
+  when: "pureftpd_config[item] is not defined"
+  with_items: contents.stdout_lines
+
+- name: 'Write config files'
+  notify: restart pureftpd
+  template:
+    src: 'config.tpl'
+    dest: '/etc/pure-ftpd/conf/{{ item.key }}'
+    owner: root
+    group: root
+    mode: 0750
+  when: item.key != ''
+  with_dict: pureftpd_config
+
+- name: write users to file
+  notify: reload pureftpd-users
+  template:
+    src: 'pureftpd.passwd'
+    dest: '/etc/pure-ftpd/pureftpd.passwd'
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Start pureftpd
+  notify: reload pureftpd-users
+  service:
+    name: 'pure-ftpd'
+    state: started
+    enabled: yes
+

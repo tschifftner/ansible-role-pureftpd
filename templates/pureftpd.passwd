@@ -1,0 +1,6 @@
+{# <account>:<password>:<uid>:<gid>:<gecos>:<home directory>:<upload bandwidth>:<download bandwidth>:<upload ratio>:<download ratio>:<max number of connections>:<files quota>:<size quota>:<authorized local IPs>:<refused local IPs>:<authorized client IPs>:<refused client IPs>:<time restrictions> #}
+{% if pureftpd_users is defined and pureftpd_users is iterable %}
+{% for user in pureftpd_users %}
+{{ user.name }}:{{ user.password }}:{{ user.uid | default(_pureftpd_user.uid) }}:{{ user.gid | default(_pureftpd_group.gid) }}::{{ user.home }}::::::::::::
+{% endfor %}
+{% endif %}
